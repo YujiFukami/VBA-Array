@@ -42,7 +42,13 @@ Sub ADAGADA()
 End Sub
 Function SortArray2D(InputArray2D, Optional SortCol%, Optional InputOrder As OrderType = xlAscending)
 '指定の2次元配列を、指定列を基準に並び替える
-        
+'配列は文字列を含んでいてもよい
+'20210726
+
+'InputArray2D・・・並び替え対象の2次元配列
+'SortCol・・・並び替えの基準で指定する列番号
+'InputOrder・・・xlAscending→昇順, xlDescending→降順
+
     '指定列を1次元配列で抽出
     Dim KijunArray1D
     Dim MinRow&, MaxRow&
@@ -62,6 +68,12 @@ Function SortArray2D(InputArray2D, Optional SortCol%, Optional InputOrder As Ord
 End Function
 Function SortArray2Dby1D(InputArray2D, ByVal KijunArray1D, Optional InputOrder As OrderType = xlAscending)
 '指定の2次元配列を、指定1次元配列を基準に並び替える
+'配列は文字列を含んでいてもよい
+'20210726
+
+'InputArray2D・・・並び替え対象の2次元配列
+'KijunArray1D・・・並び替えの基準となる配列
+'InputOrder・・・xlAscending→昇順, xlDescending→降順
 
     '入力値のチェック
     Dim Dummy%
@@ -154,19 +166,15 @@ Function SortArray2Dby1D(InputArray2D, ByVal KijunArray1D, Optional InputOrder A
     SortArray2Dby1D = TmpArray
 
 End Function
-Sub ADAGADAE()
-
-    Dim TestArray, Array123
-    TestArray = Array(1.2, 6, 3, 1, 3, 7, 8, 3)
-    Array123 = Array(1, 2, 3, 4, 5, 6, 7, 8)
-    Call SortArrayQuick(TestArray, Array123)
-    
-    Call DPH(TestArray)
-    Call DPH(Array123)
-    
-End Sub
 Sub SortArrayQuick(KijunArray, Array123, Optional StartNum%, Optional EndNum%)
-'クイックソートで配列を並び替える
+'クイックソートで1次元配列を並び替える
+'並び替え後の順番を出力するために配列「Array123」を同時に並び替える
+'20210726
+
+'KijunArray・・・並び替え対象の配列（1次元配列）
+'Array123・・・「1,2,3」の値が入った1次元配列
+'StartNum・・・再帰用の引数
+'EndNum・・・再帰用の引数
 
     If StartNum = 0 Then
         StartNum = LBound(KijunArray, 1)
