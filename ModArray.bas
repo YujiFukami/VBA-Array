@@ -3,23 +3,19 @@ Option Explicit
 
 '配列の処理関係のプロシージャ
 
-Function SortArrayByNetFramework(InputArray1D, Optional InputOrder As OrderType = xlAscending)
+Function SortArrayByNetFramework(InputArray, Optional InputOrder As OrderType = xlAscending)
 '一次元配列をNet.Frameworkを使って昇順にする
-'数値しか扱えない
 '20210726
-    
-    '引数チェック
-    Call CheckArray1D(InputArray1D, "InputArray1D")
-    
+
     Dim DataList, I&, Msg$
     Set DataList = CreateObject("System.Collections.ArrayList")
     
-    For I = LBound(InputArray1D, 1) To UBound(InputArray1D, 1)
-        DataList.Add InputArray1D(I)
+    For I = LBound(InputArray, 1) To UBound(InputArray, 1)
+        DataList.Add InputArray(I)
     Next I
     
     Dim Output
-    ReDim Output(LBound(InputArray1D, 1) To UBound(InputArray1D, 1))
+    ReDim Output(LBound(InputArray, 1) To UBound(InputArray, 1))
     
     If InputOrder = xlAscending Then
         DataList.Sort
@@ -28,7 +24,7 @@ Function SortArrayByNetFramework(InputArray1D, Optional InputOrder As OrderType 
     End If
     
     For I = 0 To DataList.Count - 1
-        Output(I + LBound(InputArray1D, 1)) = DataList(I)
+        Output(I + LBound(InputArray, 1)) = DataList(I)
     Next I
     Set DataList = Nothing
     
@@ -157,6 +153,8 @@ Function SortArray2Dby1D(InputArray2D, ByVal KijunArray1D, Optional InputOrder A
         End If
     Next I
     
+    Call DPH(Array123)
+    Call DPH(KijunArray1D)
     Call SortArrayQuick(KijunArray1D, Array123)
         
     ReDim TmpArray(MinRow To MaxRow, MinCol To MaxCol)
@@ -226,7 +224,7 @@ Sub SortArrayQuick(KijunArray, Array123, Optional StartNum%, Optional EndNum%)
     End If
 End Sub
 
-Private Function ConvStrToISO(InputStr$)
+Function ConvStrToISO(InputStr$)
 '文字列を並び替え用にISOコードに変換
 '20210726
 
@@ -260,38 +258,6 @@ Private Function ConvStrToISO(InputStr$)
     ConvStrToISO = Output
 
 End Function
-
-
-
-Sub MessageArray2D(Array2D)
-'二次元配列をメッセージに表示する。
-'20210824
-
-    '引数チェック
-    Call CheckArray2D(Array2D)
-    Call CheckArray2DStart1(Array2D)
-    
-    '処理
-    Dim Tmp$
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
-    For I = 1 To UBound(Array2D, 1)
-        For J = 1 To UBound(Array2D, 2)
-            If J = 1 Then
-                Tmp = Tmp & Array2D(I, J)
-            Else
-                Tmp = Tmp & Chr(9) & Array2D(I, J)
-            End If
-        Next J
-        
-        If I <> UBound(Array2D, 1) Then
-            Tmp = Tmp & vbLf
-        End If
-    Next I
-        
-    MsgBox (Tmp)
-    
-End Sub
-
 
 Sub CheckArray1D(InputArray, Optional HairetuName$ = "配列")
 '入力配列が1次元配列かどうかチェックする
@@ -350,4 +316,120 @@ Sub CheckArray2DStart1(InputArray, Optional HairetuName$ = "配列")
 
 End Sub
 
+Sub ClipCopyArray2D(Array2D)
+'2次元配列を変数宣言用のテキストデータに変換して、クリップボードにコピーする
+'20210805
+    
+    '引数チェック
+    Call CheckArray2D(Array2D, "Array2D")
+    Call CheckArray2DStart1(Array2D, "Array2D")
+    
+    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    N = UBound(Array2D, 1)
+    M = UBound(Array2D, 2)
+    
+    Dim TmpValue
+    Dim Output$
+    
+    Output = ""
+    For I = 1 To N
+        If I = 1 Then
+            Output = Output & String(3, Chr(9)) & "Array(Array("
+        Else
+            Output = Output & String(3, Chr(9)) & "Array("
+        End If
+        
+        For J = 1 To M
+            TmpValue = Array2D(I, J)
+            If IsNumeric(TmpValue) Then
+                Output = Output & TmpValue
+            Else
+                Output = Output & """" & TmpValue & """"
+            End If
+            
+            If J < M Then
+                Output = Output & ","
+            Else
+                Output = Output & ")"
+            End If
+        Next J
+        
+        If I < N Then
+            Output = Output & ", _" & vbLf
+        Else
+            Output = Output & ")"
+        End If
+    Next I
+    
+    Output = "Application.Transpose(Application.Transpose( _" & vbLf & Output & " _" & vbLf & String(3, Chr(9)) & "))"
+    
+    Call ClipboardCopy(Output, True)
+    
+End Sub
 
+Sub ClipCopyArray1D(Array1D)
+'1次元配列を変数宣言用のテキストデータに変換して、クリップボードにコピーする
+'20210805
+    
+    '引数チェック
+    Call CheckArray1D(Array1D, "Array1D")
+    Call CheckArray1DStart1(Array1D, "Array1D")
+    
+    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    N = UBound(Array1D, 1)
+    
+    Dim TmpValue
+    Dim Output$
+    
+    Output = String(3, Chr(9)) & "Array("
+    For I = 1 To N
+        
+        TmpValue = Array1D(I)
+        If IsNumeric(TmpValue) Then
+            Output = Output & TmpValue
+        Else
+            Output = Output & """" & TmpValue & """"
+        End If
+        
+        If I < N Then
+            Output = Output & ","
+        Else
+            Output = Output & ")"
+        End If
+        
+    Next I
+    
+    Output = "Application.Transpose(Application.Transpose( _" & vbLf & Output & " _" & vbLf & String(3, Chr(9)) & "))"
+    
+    Call ClipboardCopy(Output, True)
+    
+End Sub
+
+Sub MessageArray2D(Array2D)
+'二次元配列をメッセージに表示する。
+'20210824
+
+    '引数チェック
+    Call CheckArray2D(Array2D)
+    Call CheckArray2DStart1(Array2D)
+    
+    '処理
+    Dim Tmp$
+    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    For I = 1 To UBound(Array2D, 1)
+        For J = 1 To UBound(Array2D, 2)
+            If J = 1 Then
+                Tmp = Tmp & Array2D(I, J)
+            Else
+                Tmp = Tmp & Chr(9) & Array2D(I, J)
+            End If
+        Next J
+        
+        If I <> UBound(Array2D, 1) Then
+            Tmp = Tmp & vbLf
+        End If
+    Next I
+        
+    MsgBox (Tmp)
+    
+End Sub
