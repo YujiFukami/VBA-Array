@@ -7,7 +7,9 @@ Function SortArrayByNetFramework(InputArray, Optional InputOrder As OrderType = 
 '一次元配列をNet.Frameworkを使って昇順にする
 '20210726
 
-    Dim DataList, I&, Msg$
+    Dim DataList
+    Dim I   As Long
+    Dim Msg As String
     Set DataList = CreateObject("System.Collections.ArrayList")
     
     For I = LBound(InputArray, 1) To UBound(InputArray, 1)
@@ -34,15 +36,14 @@ End Function
 
 Sub TestSortArray2D()
     Dim TmpList
-    TmpList = Range("B20").CurrentRegion.Value
     Dim SortList
-    
+    TmpList = Range("B20").CurrentRegion.Value
     SortList = SortArray2D(TmpList, 2)
     Call DPH(SortList)
     
 End Sub
 
-Function SortArray2D(InputArray2D, Optional SortCol&, Optional InputOrder As OrderType = xlAscending)
+Function SortArray2D(InputArray2D, Optional SortCol As Long, Optional InputOrder As OrderType = xlAscending)
 '指定の2次元配列を、指定列を基準に並び替える
 '配列は文字列を含んでいてもよい
 '20210726
@@ -53,11 +54,12 @@ Function SortArray2D(InputArray2D, Optional SortCol&, Optional InputOrder As Ord
 
     '指定列を1次元配列で抽出
     Dim KijunArray1D
-    Dim MinRow&, MaxRow&
+    Dim MinRow      As Long
+    Dim MaxRow      As Long
+    Dim I           As Long
     MinRow = LBound(InputArray2D, 1)
     MaxRow = UBound(InputArray2D, 1)
     ReDim KijunArray1D(MinRow To MaxRow)
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
     For I = MinRow To MaxRow
         KijunArray1D(I) = InputArray2D(I, SortCol)
     Next I
@@ -74,13 +76,14 @@ Private Function SortArray2Dby1D(InputArray2D, ByVal KijunArray1D, Optional Inpu
 '配列は文字列を含んでいてもよい
 '20210726
 '20210917修正
-                                    
+'20211016修正 配列のの中身がオブジェクト変数でも対応
+                                   
 'InputArray2D・・・並び替え対象の2次元配列
 'KijunArray1D・・・並び替えの基準となる配列
 'InputOrder  ・・・xlAscending→昇順, xlDescending→降順
 
     '入力値のチェック
-    Dim Dummy%
+    Dim Dummy As Integer
     On Error Resume Next
     Dummy = UBound(KijunArray1D, 2)
     On Error GoTo 0
@@ -100,7 +103,10 @@ Private Function SortArray2Dby1D(InputArray2D, ByVal KijunArray1D, Optional Inpu
         End
     End If
     
-    Dim MinRow&, MaxRow&, MinCol&, MaxCol&
+    Dim MinRow As Long
+    Dim MaxRow As Long
+    Dim MinCol As Long
+    Dim MaxCol As Long
     MinRow = LBound(InputArray2D, 1)
     MaxRow = UBound(InputArray2D, 1)
     MinCol = LBound(InputArray2D, 2)
@@ -112,10 +118,11 @@ Private Function SortArray2Dby1D(InputArray2D, ByVal KijunArray1D, Optional Inpu
     End If
     
     '基準配列に文字列が含まれている場合はISOコードに変換
-    Dim StrAruNaraTrue As Boolean
-    StrAruNaraTrue = False
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
-    Dim Tmp, TmpStr$
+    Dim StrAruNaraTrue As Boolean: StrAruNaraTrue = False
+    Dim I      As Long
+    Dim J      As Long
+    Dim Tmp
+    Dim TmpStr As String
     For I = MinRow To MaxRow
         Tmp = KijunArray1D(I)
         If VarType(Tmp) = vbString Then
@@ -132,17 +139,27 @@ Private Function SortArray2Dby1D(InputArray2D, ByVal KijunArray1D, Optional Inpu
     End If
     
     '基準配列を正規化して、(1～要素数)の間の数値にする
-    Dim Count&, MinNum#, MaxNum#
+    Dim Count  As Long
+    Dim MinNum As Double
+    Dim MaxNum As Double
     Count = MaxRow - MinRow + 1
     MinNum = WorksheetFunction.Min(KijunArray1D)
     MaxNum = WorksheetFunction.Max(KijunArray1D)
+    
+    Dim TmpArray
+    If MinNum = MaxNum Then '20211016修正'最大と最小が一致するならそのまま返す
+        TmpArray = InputArray2D
+        GoTo EndEscape
+    End If
+    
     For I = MinRow To MaxRow
         KijunArray1D(I) = (KijunArray1D(I) - MinNum) / (MaxNum - MinNum) '(0～1)の間で正規化
         KijunArray1D(I) = (Count - 1) * KijunArray1D(I) + 1 '(1～要素数)の間
     Next I
     
     '並び替え(1,2,3の配列を作ってクイックソートで並び替えて、対象の配列を並び替え後の1,2,3で入れ替える)
-    Dim TmpArray, Array123, TmpNum&
+    Dim Array123
+    Dim TmpNum  As Long
     ReDim Array123(MinRow To MaxRow)
     For I = MinRow To MaxRow
         Array123(I) = I - MinRow + 1
@@ -157,23 +174,34 @@ Private Function SortArray2Dby1D(InputArray2D, ByVal KijunArray1D, Optional Inpu
         
         For J = MinCol To MaxCol
             If InputOrder = xlAscending Then '20210917修正
-                TmpArray(I, J) = InputArray2D(TmpNum, J)
+                If IsObject(InputArray2D(TmpNum, J)) Then '20211016修正
+                    Set TmpArray(I, J) = InputArray2D(TmpNum, J)
+                Else
+                    TmpArray(I, J) = InputArray2D(TmpNum, J)
+                End If
             Else
-                TmpArray(MaxRow - I + 1, J) = InputArray2D(TmpNum, J)
+                If IsObject(InputArray2D(TmpNum, J)) Then '20211016修正
+                    Set TmpArray(MaxRow - I + 1, J) = InputArray2D(TmpNum, J)
+                Else
+                    TmpArray(MaxRow - I + 1, J) = InputArray2D(TmpNum, J)
+                End If
             End If
                 
         Next J
     Next I
-    
+
+EndEscape:
+
     '出力
     SortArray2Dby1D = TmpArray
 
 End Function
 
-Sub SortArrayQuick(KijunArray, Array123, Optional StartNum%, Optional EndNum%)
+Sub SortArrayQuick(KijunArray, Array123, Optional StartNum As Integer, Optional EndNum As Integer)
 'クイックソートで1次元配列を並び替える
 '並び替え後の順番を出力するために配列「Array123」を同時に並び替える
 '20210726
+'20211016修正 配列の中身がオブジェクト変数でも対応
 
 'KijunArray・・・並び替え対象の配列（1次元配列）
 'Array123  ・・・「1,2,3」の値が入った1次元配列
@@ -188,13 +216,18 @@ Sub SortArrayQuick(KijunArray, Array123, Optional StartNum%, Optional EndNum%)
         EndNum = UBound(KijunArray, 1)
     End If
     
-    Dim Tmp#, Counter#, I&, J&
+    Dim Tmp     As Double
+    Dim Counter As Double
+    Dim I       As Long
+    Dim J       As Long
     Counter = KijunArray((StartNum + EndNum) \ 2)
     I = StartNum - 1
     J = EndNum + 1
     
     '並び替え対象の配列の処理
-    Dim Col&, MinCol&, MaxCol&
+    Dim Col    As Long
+    Dim MinCol As Long
+    Dim MaxCol As Long
     Dim Tmp2
     
     Do
@@ -211,10 +244,15 @@ Sub SortArrayQuick(KijunArray, Array123, Optional StartNum%, Optional EndNum%)
         KijunArray(J) = KijunArray(I)
         KijunArray(I) = Tmp
         
-        Tmp2 = Array123(J)
-        Array123(J) = Array123(I)
-        Array123(I) = Tmp2
-    
+        If IsObject(Array123(I)) Then '20211016修正
+            Set Tmp2 = Array123(J)
+            Set Array123(J) = Array123(I)
+            Set Array123(I) = Tmp2
+        Else
+            Tmp2 = Array123(J)
+            Array123(J) = Array123(I)
+            Array123(I) = Tmp2
+        End If
     Loop
     If I - StartNum > 1 Then
         Call SortArrayQuick(KijunArray, Array123, StartNum, I - 1) '再帰呼び出し
@@ -224,22 +262,26 @@ Sub SortArrayQuick(KijunArray, Array123, Optional StartNum%, Optional EndNum%)
     End If
 End Sub
 
-Function ConvStrToISO(InputStr$)
+Function ConvStrToISO(InputStr As String)
 '文字列を並び替え用にISOコードに変換
 '20210726
 
     Dim Mojiretu As String
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    Dim I        As Long
+    Dim J        As Long
+    Dim K        As Long
+    Dim M        As Long
+    Dim N        As Long
     Dim UniCode
-    
-    Dim UniMax&
+    Dim UniMax   As Long
     UniMax = 65536
     
-    Dim StartKeta%, Kurai#
+    Dim StartKeta As Integer
+    Dim Kurai     As Double
     StartKeta = 20 '←←←←←←←←←←←←←←←←←←←←←←←
     Kurai = Exp(1) '←←←←←←←←←←←←←←←←←←←←←←←
     
-    Dim Output#
+    Dim Output As Double
     
     If InputStr = "" Then
         Output = 0
@@ -259,11 +301,11 @@ Function ConvStrToISO(InputStr$)
 
 End Function
 
-Sub CheckArray1D(InputArray, Optional HairetuName$ = "配列")
+Sub CheckArray1D(InputArray, Optional HairetuName As String = "配列")
 '入力配列が1次元配列かどうかチェックする
 '20210804
 
-    Dim Dummy%
+    Dim Dummy As Integer
     On Error Resume Next
     Dummy = UBound(InputArray, 2)
     On Error GoTo 0
@@ -275,11 +317,12 @@ Sub CheckArray1D(InputArray, Optional HairetuName$ = "配列")
 
 End Sub
 
-Sub CheckArray2D(InputArray, Optional HairetuName$ = "配列")
+Sub CheckArray2D(InputArray, Optional HairetuName As String = "配列")
 '入力配列が2次元配列かどうかチェックする
 '20210804
 
-    Dim Dummy2%, Dummy3%
+    Dim Dummy2 As Integer
+    Dim Dummy3 As Integer
     On Error Resume Next
     Dummy2 = UBound(InputArray, 2)
     Dummy3 = UBound(InputArray, 3)
@@ -292,7 +335,7 @@ Sub CheckArray2D(InputArray, Optional HairetuName$ = "配列")
 
 End Sub
 
-Sub CheckArray1DStart1(InputArray, Optional HairetuName$ = "配列")
+Sub CheckArray1DStart1(InputArray, Optional HairetuName As String = "配列")
 '入力1次元配列の開始番号が1かどうかチェックする
 '20210804
 
@@ -304,7 +347,7 @@ Sub CheckArray1DStart1(InputArray, Optional HairetuName$ = "配列")
 
 End Sub
 
-Sub CheckArray2DStart1(InputArray, Optional HairetuName$ = "配列")
+Sub CheckArray2DStart1(InputArray, Optional HairetuName As String = "配列")
 '入力2次元配列の開始番号が1かどうかチェックする
 '20210804
 
@@ -320,17 +363,21 @@ End Sub
 Sub ClipCopyArray2D(Array2D)
 '2次元配列を変数宣言用のテキストデータに変換して、クリップボードにコピーする
 '20210805
-    
+'20211016 「"」を含む場合も対応
+
     '引数チェック
     Call CheckArray2D(Array2D, "Array2D")
     Call CheckArray2DStart1(Array2D, "Array2D")
     
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    Dim I As Long
+    Dim J As Long
+    Dim M As Long
+    Dim N As Long '数え上げ用(Long型)
     N = UBound(Array2D, 1)
     M = UBound(Array2D, 2)
     
     Dim TmpValue
-    Dim Output$
+    Dim Output As String
     
     Output = ""
     For I = 1 To N
@@ -342,7 +389,12 @@ Sub ClipCopyArray2D(Array2D)
         
         For J = 1 To M
             TmpValue = Array2D(I, J)
-            If IsNumeric(TmpValue) Then
+            
+            TmpValue = Replace(TmpValue, """", String(2, """")) '20211016
+            
+            If TmpValue = "" Then
+                Output = Output & """" & """"
+            ElseIf IsNumeric(TmpValue) Then
                 Output = Output & TmpValue
             Else
                 Output = Output & """" & TmpValue & """"
@@ -376,11 +428,12 @@ Sub ClipCopyArray1D(Array1D)
     Call CheckArray1D(Array1D, "Array1D")
     Call CheckArray1DStart1(Array1D, "Array1D")
     
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    Dim I As Long
+    Dim N As Long
     N = UBound(Array1D, 1)
     
     Dim TmpValue
-    Dim Output$
+    Dim Output As String
     
     Output = String(3, Chr(9)) & "Array("
     For I = 1 To N
@@ -415,8 +468,9 @@ Sub MessageArray2D(Array2D)
     Call CheckArray2DStart1(Array2D)
     
     '処理
-    Dim Tmp$
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    Dim Tmp As String
+    Dim I   As Long
+    Dim J   As Long
     For I = 1 To UBound(Array2D, 1)
         For J = 1 To UBound(Array2D, 2)
             If J = 1 Then
@@ -445,7 +499,8 @@ Function ConvArray1Dto1N(InputArray1D)
     Call CheckArray1D(InputArray1D, "InputArray1D")
     Call CheckArray1DStart1(InputArray1D, "InputArray1D")
     
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    Dim I As Long
+    Dim N As Long
     N = UBound(InputArray1D, 1)
     Dim Output
     ReDim Output(1 To 1, 1 To N)
@@ -458,7 +513,7 @@ Function ConvArray1Dto1N(InputArray1D)
 
 End Function
 
-Function DeleteRowArray(Array2D, DeleteRow&)
+Function DeleteRowArray(Array2D, DeleteRow As Long)
 '二次元配列の指定行を消去した配列を出力する
 '20210917
 
@@ -470,7 +525,11 @@ Function DeleteRowArray(Array2D, DeleteRow&)
     Call CheckArray2D(Array2D, "Array2D")
     Call CheckArray2DStart1(Array2D, "Array2D")
     
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    Dim I As Long
+    Dim J As Long
+    Dim K As Long
+    Dim M As Long
+    Dim N As Long
     N = UBound(Array2D, 1) '行数
     M = UBound(Array2D, 2) '列数
     
@@ -502,7 +561,7 @@ Function DeleteRowArray(Array2D, DeleteRow&)
 
 End Function
 
-Function DeleteColArray(Array2D, DeleteCol&)
+Function DeleteColArray(Array2D, DeleteCol As Long)
 '二次元配列の指定列を消去した配列を出力する
 '20210917
 
@@ -514,7 +573,11 @@ Function DeleteColArray(Array2D, DeleteCol&)
     Call CheckArray2D(Array2D, "Array2D")
     Call CheckArray2DStart1(Array2D, "Array2D")
     
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    Dim I As Long
+    Dim J As Long
+    Dim K As Long
+    Dim M As Long
+    Dim N As Long
     N = UBound(Array2D, 1) '行数
     M = UBound(Array2D, 2) '列数
 
@@ -546,7 +609,7 @@ Function DeleteColArray(Array2D, DeleteCol&)
 
 End Function
 
-Function ExtractRowArray(Array2D, TargetRow&)
+Function ExtractRowArray(Array2D, TargetRow As Long)
 '二次元配列の指定行を一次元配列で抽出する
 '20210917
 
@@ -559,7 +622,9 @@ Function ExtractRowArray(Array2D, TargetRow&)
     Call CheckArray2D(Array2D, "Array2D")
     Call CheckArray2DStart1(Array2D, "Array2D")
     
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    Dim I As Long
+    Dim M As Long
+    Dim N As Long
     N = UBound(Array2D, 1) '行数
     M = UBound(Array2D, 2) '列数
 
@@ -586,20 +651,22 @@ Function ExtractRowArray(Array2D, TargetRow&)
     
 End Function
 
-Function ExtractColArray(Array2D, TargetCol&)
+Function ExtractColArray(Array2D, TargetCol As Long)
 '二次元配列の指定列を一次元配列で抽出する
 '20210917
+'20211016修正 配列の中身がオブジェクト変数でも対応
 
 '引数
 'Array2D  ・・・二次元配列
 'TargetCol・・・抽出する対象の列番号
 
-
     '引数チェック
     Call CheckArray2D(Array2D, "Array2D")
     Call CheckArray2DStart1(Array2D, "Array2D")
     
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    Dim I As Long
+    Dim M As Long
+    Dim N As Long
     N = UBound(Array2D, 1) '行数
     M = UBound(Array2D, 2) '列数
  
@@ -618,7 +685,11 @@ Function ExtractColArray(Array2D, TargetCol&)
     ReDim Output(1 To N)
     
     For I = 1 To N
-        Output(I) = Array2D(I, TargetCol)
+        If IsObject(Array2D(I, TargetCol)) Then '20211016修正
+            Set Output(I) = Array2D(I, TargetCol)
+        Else
+            Output(I) = Array2D(I, TargetCol)
+        End If
     Next I
     
     '出力
@@ -626,7 +697,7 @@ Function ExtractColArray(Array2D, TargetCol&)
     
 End Function
 
-Function ExtractArray(Array2D, StartRow&, StartCol&, EndRow&, EndCol&)
+Function ExtractArray(Array2D, StartRow As Long, StartCol As Long, EndRow As Long, EndCol As Long)
 '二次元配列の指定範囲を配列として抽出する
 '20210917
 
@@ -641,7 +712,10 @@ Function ExtractArray(Array2D, StartRow&, StartCol&, EndRow&, EndCol&)
     Call CheckArray2D(Array2D, "Array2D")
     Call CheckArray2DStart1(Array2D, "Array2D")
     
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    Dim I As Long
+    Dim J As Long
+    Dim M As Long
+    Dim N As Long
     N = UBound(Array2D, 1) '行数
     M = UBound(Array2D, 2) '列数
     
@@ -686,6 +760,50 @@ Function ExtractArray(Array2D, StartRow&, StartCol&, EndRow&, EndCol&)
     
 End Function
 
+Function ExtractArray1D(Array1D, StartNum As Long, EndNum As Long)
+'一次元配列の指定範囲を配列として抽出する
+'20211009
+
+'引数
+'Array1D ・・・一次元配列
+'StartNum・・・抽出範囲の開始番号
+'EndNum  ・・・抽出範囲の終了番号
+                                   
+    '引数チェック
+    Call CheckArray1D(Array1D, "Array1D")
+    Call CheckArray1DStart1(Array1D, "Array1D")
+    
+    Dim I As Long
+    Dim N As Long
+    N = UBound(Array1D, 1) '要素数
+    
+    If StartNum > EndNum Then
+        MsgBox ("抽出範囲の開始位置「StartNum」は、終了位置「EndNum」以下でなければなりません")
+        Stop
+        Exit Function
+    ElseIf StartNum < 1 Then
+        MsgBox ("抽出範囲の開始位置「StartNum」は1以上の値を入れてください")
+        Stop
+        Exit Function
+    ElseIf EndNum > N Then
+        MsgBox ("抽出範囲の終了行「EndNum」は抽出元の一次元配列の要素数" & N & "以下の値を入れてください")
+        Stop
+        Exit Function
+    End If
+    
+    '処理
+    Dim Output
+    ReDim Output(1 To EndNum - StartNum + 1)
+    
+    For I = StartNum To EndNum
+        Output(I - StartNum + 1) = Array1D(I)
+    Next I
+    
+    '出力
+    ExtractArray1D = Output
+    
+End Function
+
 Function UnionArray1D(UpperArray1D, LowerArray1D)
 '一次元配列同士を結合して1つの配列とする。
 '20210923
@@ -700,21 +818,65 @@ Function UnionArray1D(UpperArray1D, LowerArray1D)
     Call CheckArray1DStart1(LowerArray1D, "LowerArray1D")
     
     '処理
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
-    Dim N1&, N2&
+    Dim I  As Long
+    Dim N1 As Long
+    Dim N2 As Long
     N1 = UBound(UpperArray1D, 1)
-    N2 = UBound(UpperArray1D, 2)
+    N2 = UBound(LowerArray1D, 1)
     Dim Output
     ReDim Output(1 To N1 + N2)
     For I = 1 To N1
         Output(I) = UpperArray1D(I)
     Next I
     For I = 1 To N2
-        Output(N1 + I) = UpperArray2D(I)
+        Output(N1 + I) = LowerArray1D(I)
     Next I
     
     '出力
     UnionArray1D = Output
+    
+End Function
+
+Function UnionArrayLR1D(LeftArray1D, RightArray1D)
+'一次元配列同士を左右に結合して1つの配列とする。
+'20211016
+
+'LeftArray1D ・・・左に結合する一次元配列
+'RightArray1D・・・右に結合する一次元配列
+
+    '引数チェック
+    Call CheckArray1D(LeftArray1D, "LeftArray1D")
+    Call CheckArray1DStart1(LeftArray1D, "LeftArray1D")
+    Call CheckArray1D(RightArray1D, "RightArray1D")
+    Call CheckArray1DStart1(RightArray1D, "RightArray1D")
+    If UBound(LeftArray1D, 1) <> UBound(RightArray1D, 1) Then
+        MsgBox ("LeftArray1DとRightArray1Dの要素数は揃えてください")
+        Stop
+        Exit Function
+    End If
+    
+    '処理
+    Dim I As Long
+    Dim N As Long
+    N = UBound(LeftArray1D, 1)
+    Dim Output
+    ReDim Output(1 To N, 1 To 2)
+    For I = 1 To N
+        If IsObject(LeftArray1D(I)) Then
+            Set Output(I, 1) = LeftArray1D(I)
+        Else
+            Output(I, 1) = LeftArray1D(I)
+        End If
+        
+        If IsObject(RightArray1D(I)) Then
+            Set Output(I, 2) = RightArray1D(I)
+        Else
+            Output(I, 2) = RightArray1D(I)
+        End If
+    Next I
+    
+    '出力
+    UnionArrayLR1D = Output
     
 End Function
 
@@ -739,8 +901,11 @@ Function UnionArrayUL(UpperArray2D, LowerArray2D)
     
     '処理
     Dim Output
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
-    Dim N1&, N2&
+    Dim I  As Long
+    Dim J  As Long
+    Dim M  As Long
+    Dim N1 As Long
+    Dim N2 As Long
     N1 = UBound(UpperArray2D, 1)
     N2 = UBound(LowerArray2D, 1)
     M = UBound(UpperArray2D, 2)
@@ -784,8 +949,11 @@ Function UnionArrayLR(LeftArray2D, RightArray2D)
     
     '処理
     Dim Output
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
-    Dim M1&, M2&
+    Dim I     As Long
+    Dim J     As Long
+    Dim K     As Long
+    Dim M1    As Long
+    Dim M2    As Long
     M1 = UBound(LeftArray2D, 2)
     M2 = UBound(RightArray2D, 2)
     N = UBound(LeftArray2D, 1)
@@ -809,7 +977,7 @@ Function UnionArrayLR(LeftArray2D, RightArray2D)
 End Function
 
 
-Function DimArray1DSameValue(Count&, Value)
+Function DimArray1DSameValue(Count As Long, Value)
 '全て同じ値が入った一次元配列を定義する
 '20210923
 
@@ -825,7 +993,7 @@ Function DimArray1DSameValue(Count&, Value)
     
     '処理
     Dim Output
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    Dim I     As Long
     ReDim Output(1 To Count)
     For I = 1 To Count
         If IsObject(Value) Then
@@ -840,7 +1008,7 @@ Function DimArray1DSameValue(Count&, Value)
     
 End Function
 
-Function DimArray2DSameValue(Count1&, Count2&, Value)
+Function DimArray2DSameValue(Count1 As Long, Count2 As Long, Value)
 '全て同じ値が入った二次元配列を定義する
 '20210923
 
@@ -863,7 +1031,8 @@ Function DimArray2DSameValue(Count1&, Count2&, Value)
     
     '処理
     Dim Output
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
+    Dim I     As Long
+    Dim J     As Long
     ReDim Output(1 To Count1, 1 To Count2)
     For I = 1 To Count1
         For J = 1 To Count2
@@ -880,8 +1049,8 @@ Function DimArray2DSameValue(Count1&, Count2&, Value)
     
 End Function
 
-Function FilterArray2D(Array2D, FilterStr$, TargetCol&)
-'二次元配列を指定セルでフィルターした配列を出力する。
+Function FilterArray2D(Array2D, FilterStr As String, TargetCol As Long)
+'二次元配列を指定列でフィルターした配列を出力する。
 '20210929
 
 '引数
@@ -894,8 +1063,13 @@ Function FilterArray2D(Array2D, FilterStr$, TargetCol&)
     Call CheckArray2DStart1(Array2D, "Array2D")
     
     'フィルター件数計算
-    Dim I&, J&, K&, M&, N& '数え上げ用(Long型)
-    Dim FilterCount&, TargetStr$
+    Dim I           As Long
+    Dim J           As Long
+    Dim K           As Long
+    Dim M           As Long
+    Dim N           As Long
+    Dim FilterCount As Long
+    Dim TargetStr   As String
     N = UBound(Array2D, 1)
     M = UBound(Array2D, 2)
     K = 0
@@ -931,6 +1105,46 @@ Function FilterArray2D(Array2D, FilterStr$, TargetCol&)
     
     '出力
     FilterArray2D = Output
+    
+End Function
+
+Function DimArray1DNumbers(StartNum As Long, EndNum As Long, Optional ByVal StepNum As Long = 1)
+'連番の入った一次元配列を定義する
+'20211018
+
+'引数
+'StartNum ・・・最初の番号/Long型
+'EndNum　 ・・・最後の番号/Long型
+'[Step]   ・・・連番の間隔/Long型/デフォルトは1
+    
+    '引数のチェック
+    If StepNum = 0 Then
+        MsgBox ("StepNumは0以外の整数を入力してください")
+        Stop
+        Exit Function
+    End If
+    
+    '引数の修正
+    If StartNum < EndNum And StepNum < 0 Then
+        StepNum = -StepNum
+    ElseIf StartNum > EndNum And StepNum > 0 Then
+        StepNum = -StepNum
+    End If
+    
+    '連番の作成
+    Dim Output
+    Dim I     As Long
+    Dim K     As Long
+    ReDim Output(1 To 1)
+    K = 0
+    For I = StartNum To EndNum Step StepNum
+        K = K + 1
+        ReDim Preserve Output(1 To K)
+        Output(K) = I
+    Next I
+    
+    '出力
+    DimArray1DNumbers = Output
     
 End Function
 
