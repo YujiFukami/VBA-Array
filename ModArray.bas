@@ -1,7 +1,49 @@
 Attribute VB_Name = "ModArray"
 Option Explicit
 
-'配列の処理関係のプロシージャ
+'SortArrayByNetFramework         ・・・元場所：FukamiAddins3.ModArray    
+'TestSortArray2D                 ・・・元場所：FukamiAddins3.ModArray    
+'SortArray2D                     ・・・元場所：FukamiAddins3.ModArray    
+'SortArray2Dby1D                 ・・・元場所：FukamiAddins3.ModArray    
+'SortArrayQuick                  ・・・元場所：FukamiAddins3.ModArray    
+'ConvStrToISO                    ・・・元場所：FukamiAddins3.ModArray    
+'CheckArray1D                    ・・・元場所：FukamiAddins3.ModArray    
+'CheckArray2D                    ・・・元場所：FukamiAddins3.ModArray    
+'CheckArray1DStart1              ・・・元場所：FukamiAddins3.ModArray    
+'CheckArray2DStart1              ・・・元場所：FukamiAddins3.ModArray    
+'ClipCopyArray2D                 ・・・元場所：FukamiAddins3.ModArray    
+'ClipCopyArray1D                 ・・・元場所：FukamiAddins3.ModArray    
+'MessageArray2D                  ・・・元場所：FukamiAddins3.ModArray    
+'ConvArray1Dto1N                 ・・・元場所：FukamiAddins3.ModArray    
+'DeleteRowArray                  ・・・元場所：FukamiAddins3.ModArray    
+'DeleteColArray                  ・・・元場所：FukamiAddins3.ModArray    
+'ExtractRowArray                 ・・・元場所：FukamiAddins3.ModArray    
+'ExtractColArray                 ・・・元場所：FukamiAddins3.ModArray    
+'ExtractArray                    ・・・元場所：FukamiAddins3.ModArray    
+'ExtractArray1D                  ・・・元場所：FukamiAddins3.ModArray    
+'UnionArray1D                    ・・・元場所：FukamiAddins3.ModArray    
+'UnionArrayLR1D                  ・・・元場所：FukamiAddins3.ModArray    
+'UnionArrayUL                    ・・・元場所：FukamiAddins3.ModArray    
+'UnionArrayLR                    ・・・元場所：FukamiAddins3.ModArray    
+'DimArray1DSameValue             ・・・元場所：FukamiAddins3.ModArray    
+'DimArray2DSameValue             ・・・元場所：FukamiAddins3.ModArray    
+'FilterArray2D                   ・・・元場所：FukamiAddins3.ModArray    
+'DimArray1DNumbers               ・・・元場所：FukamiAddins3.ModArray    
+'DPH                             ・・・元場所：FukamiAddins3.ModImmediate
+'DebugPrintHairetu               ・・・元場所：FukamiAddins3.ModImmediate
+'文字列を指定バイト数文字数に省略・・・元場所：FukamiAddins3.ModImmediate
+'文字列の各文字累計バイト数計算  ・・・元場所：FukamiAddins3.ModImmediate
+'文字列分解                      ・・・元場所：FukamiAddins3.ModImmediate
+'ClipboardCopy                   ・・・元場所：FukamiAddins3.ModClipboard
+
+'宣言セクション※※※※※※※※※※※※※※※※※※※※※※※※※※※
+'-----------------------------------
+'元場所:FukamiAddins3.ModEnum.OrderType
+Public Enum OrderType '昇順降順の列挙型
+    xlAscending = 1
+    xlDescending = 2
+End Enum
+'宣言セクション終了※※※※※※※※※※※※※※※※※※※※※※※※※※※
 
 Function SortArrayByNetFramework(InputArray, Optional InputOrder As OrderType = xlAscending)
 '一次元配列をNet.Frameworkを使って昇順にする
@@ -71,7 +113,7 @@ Function SortArray2D(InputArray2D, Optional SortCol As Long, Optional InputOrder
     
 End Function
 
-Private Function SortArray2Dby1D(InputArray2D, ByVal KijunArray1D, Optional InputOrder As OrderType = xlAscending)
+Function SortArray2Dby1D(InputArray2D, ByVal KijunArray1D, Optional InputOrder As OrderType = xlAscending)
 '指定の2次元配列を、指定1次元配列を基準に並び替える
 '配列は文字列を含んでいてもよい
 '20210726
@@ -358,7 +400,6 @@ Sub CheckArray2DStart1(InputArray, Optional HairetuName As String = "配列")
     End If
 
 End Sub
-
 
 Sub ClipCopyArray2D(Array2D)
 '2次元配列を変数宣言用のテキストデータに変換して、クリップボードにコピーする
@@ -952,6 +993,7 @@ Function UnionArrayLR(LeftArray2D, RightArray2D)
     Dim I     As Long
     Dim J     As Long
     Dim K     As Long
+    Dim N     As Long
     Dim M1    As Long
     Dim M2    As Long
     M1 = UBound(LeftArray2D, 2)
@@ -975,7 +1017,6 @@ Function UnionArrayLR(LeftArray2D, RightArray2D)
     UnionArrayLR = Output
 
 End Function
-
 
 Function DimArray1DSameValue(Count As Long, Value)
 '全て同じ値が入った一次元配列を定義する
@@ -1147,5 +1188,339 @@ Function DimArray1DNumbers(StartNum As Long, EndNum As Long, Optional ByVal Step
     DimArray1DNumbers = Output
     
 End Function
+
+Private Sub DPH(ByVal Hairetu, Optional HyoujiMaxNagasa As Integer, Optional HairetuName As String)
+    '20210428追加
+    '入力高速化用に作成
+    
+    Call DebugPrintHairetu(Hairetu, HyoujiMaxNagasa, HairetuName)
+End Sub
+
+Private Sub DebugPrintHairetu(ByVal Hairetu, Optional HyoujiMaxNagasa As Integer, Optional HairetuName As String)
+'20201023追加
+'20211018 入力した配列がHairetu(1 to 1)の一次元配列の場合でも処理できるように修正
+
+    '二次元配列をイミディエイトウィンドウに見やすく表示する
+    
+    Dim I       As Long
+    Dim J       As Long
+    Dim M       As Long
+    Dim N       As Long
+    Dim TateMin As Long
+    Dim TateMax As Long
+    Dim YokoMin As Long
+    Dim YokoMax As Long
+
+    Dim WithTableHairetu             'テーブル付配列…イミディエイトウィンドウに表示する際にインデックス番号を表示したテーブルを追加した配列
+    Dim NagasaList
+    Dim MaxNagasaList                '各文字の文字列長さを格納、各列での文字列長さの最大値を格納
+    Dim NagasaOnajiList              '" "（半角スペース）を文字列に追加して各列で文字列長さを同じにした文字列を格納
+    Dim OutputList                   'イミディエイトウィンドウに表示する文字列を格納
+    Const SikiriMoji As String = "|" 'イミディエイトウィンドウに表示する時に各列の間に表示する「仕切り文字」
+    
+    '※※※※※※※※※※※※※※※※※※※※※※※※※※※
+    '入力引数の処理
+    Dim Jigen1 As Long
+    Dim Jigen2 As Long
+    Dim Tmp
+    On Error Resume Next
+    Jigen2 = UBound(Hairetu, 2)
+    On Error GoTo 0
+    If Jigen2 = 0 Then '1次元配列は2次元配列にする
+        Jigen1 = UBound(Hairetu, 1) '20211018 入力した配列がHairetu(1 to 1)の一次元配列の場合でも処理できるように修正
+        If Jigen1 = 1 Then
+            Tmp = Hairetu(Jigen1)
+            ReDim Hairetu(1 To 1, 1 To 1)
+            Hairetu(1, 1) = Tmp
+        Else
+            Hairetu = Application.Transpose(Hairetu)
+        End If
+    End If
+    
+    TateMin = LBound(Hairetu, 1) '配列の縦番号（インデックス）の最小
+    TateMax = UBound(Hairetu, 1) '配列の縦番号（インデックス）の最大
+    YokoMin = LBound(Hairetu, 2) '配列の横番号（インデックス）の最小
+    YokoMax = UBound(Hairetu, 2) '配列の横番号（インデックス）の最大
+    
+    'テーブル付き配列の作成
+    ReDim WithTableHairetu(1 To TateMax - TateMin + 1 + 1, 1 To YokoMax - YokoMin + 1 + 1) 'テーブル追加の分で"+1"する。
+    '「TateMax -TateMin + 1」は入力した「Hairetu」の縦インデックス数
+    '「YokoMax -YokoMin + 1」は入力した「Hairetu」の横インデックス数
+    
+    For I = 1 To TateMax - TateMin + 1
+        WithTableHairetu(I + 1, 1) = TateMin + I - 1 '縦テーブル（Hairetuの縦インデックス番号）
+        For J = 1 To YokoMax - YokoMin + 1
+            WithTableHairetu(1, J + 1) = YokoMin + J - 1 '横テーブル（Hairetuの横インデックス番号）
+            WithTableHairetu(I + 1, J + 1) = Hairetu(I - 1 + TateMin, J - 1 + YokoMin) 'Hairetuの中の値
+        Next J
+    Next I
+    
+    '※※※※※※※※※※※※※※※※※※※※※※※※※※※
+    'イミディエイトウィンドウに表示するときに各列の幅を同じに整えるために
+    '文字列長さとその各列の最大値を計算する。
+    '以下では「Hairetu」は扱わず、「WithTableHairetu」を扱う。
+    N = UBound(WithTableHairetu, 1) '「WithTableHairetu」の縦インデックス数（行数）
+    M = UBound(WithTableHairetu, 2) '「WithTableHairetu」の横インデックス数（列数）
+    ReDim NagasaList(1 To N, 1 To M)
+    ReDim MaxNagasaList(1 To M)
+    
+    Dim TmpStr As String
+    For J = 1 To M
+        For I = 1 To N
+        
+            If J > 1 And HyoujiMaxNagasa <> 0 Then
+                '最大表示長さが指定されている場合。
+                '1列目のテーブルはそのままにする。
+                TmpStr = WithTableHairetu(I, J)
+                WithTableHairetu(I, J) = 文字列を指定バイト数文字数に省略(TmpStr, HyoujiMaxNagasa)
+            End If
+            
+            NagasaList(I, J) = LenB(StrConv(WithTableHairetu(I, J), vbFromUnicode)) '全角と半角を区別して長さを計算する。
+            MaxNagasaList(J) = WorksheetFunction.Max(MaxNagasaList(J), NagasaList(I, J))
+            
+        Next I
+    Next J
+    
+    '※※※※※※※※※※※※※※※※※※※※※※※※※※※
+    'イミディエイトウィンドウに表示するために" "(半角スペース)を追加して
+    '文字列長さを同じにする。
+    ReDim NagasaOnajiList(1 To N, 1 To M)
+    Dim TmpMaxNagasa As Long
+    
+    For J = 1 To M
+        TmpMaxNagasa = MaxNagasaList(J) 'その列の最大文字列長さ
+        For I = 1 To N
+            'Rept…指定文字列を指定個数連続してつなげた文字列を出力する。
+            '（最大文字数-文字数）の分" "（半角スペース）を後ろにくっつける。
+            NagasaOnajiList(I, J) = WithTableHairetu(I, J) & WorksheetFunction.Rept(" ", TmpMaxNagasa - NagasaList(I, J))
+       
+        Next I
+    Next J
+    
+    '※※※※※※※※※※※※※※※※※※※※※※※※※※※
+    'イミディエイトウィンドウに表示する文字列を作成
+    ReDim OutputList(1 To N)
+    For I = 1 To N
+        For J = 1 To M
+            If J = 1 Then
+                OutputList(I) = NagasaOnajiList(I, J)
+            Else
+                OutputList(I) = OutputList(I) & SikiriMoji & NagasaOnajiList(I, J)
+            End If
+        Next J
+    Next I
+    
+    ''※※※※※※※※※※※※※※※※※※※※※※※※※※※
+    'イミディエイトウィンドウに表示
+    Debug.Print HairetuName
+    For I = 1 To N
+        Debug.Print OutputList(I)
+    Next I
+    
+End Sub
+
+Private Function 文字列を指定バイト数文字数に省略(Mojiretu As String, ByteNum As Integer)
+    '20201023追加
+    '文字列を指定省略バイト文字数までの長さで省略する。
+    '省略された文字列の最後の文字は"."に変更する。
+    '例：Mojiretu = "魑魅魍魎" , ByteNum = 6 … 出力 = "魑魅.."
+    '例：Mojiretu = "魑魅魍魎" , ByteNum = 7 … 出力 = "魑魅魍."
+    '例：Mojiretu = "魑魅XX魎" , ByteNum = 6 … 出力 = "魑魅X."
+    '例：Mojiretu = "魑魅XX魎" , ByteNum = 7 … 出力 = "魑魅XX."
+    
+    Dim OriginByte As Integer '入力した文字列「Mojiretu」のバイト文字数
+    Dim Output                '出力する変数を格納
+    
+    '「Mojiretu」のバイト文字数計算
+    OriginByte = LenB(StrConv(Mojiretu, vbFromUnicode))
+    
+    If OriginByte <= ByteNum Then
+        '「Mojiretu」のバイト文字数計算が省略するバイト文字数以下なら
+        '省略はしない
+        Output = Mojiretu
+    Else
+    
+        Dim RuikeiByteList, BunkaiMojiretu
+        RuikeiByteList = 文字列の各文字累計バイト数計算(Mojiretu)
+        BunkaiMojiretu = 文字列分解(Mojiretu)
+        
+        Dim AddMoji As String
+        AddMoji = "."
+        
+        Dim I As Long, N As Long
+        N = Len(Mojiretu)
+        
+        For I = 1 To N
+            If RuikeiByteList(I) < ByteNum Then
+                Output = Output & BunkaiMojiretu(I)
+                
+            ElseIf RuikeiByteList(I) = ByteNum Then
+                If LenB(StrConv(BunkaiMojiretu(I), vbFromUnicode)) = 1 Then
+                    '例：Mojiretu = "魑魅魍魎" , ByteNum = 6 ,RuikeiByteList(3) = 6
+                    'Output = "魑魅.."
+                    Output = Output & AddMoji
+                Else
+                    '例：Mojiretu = "魑魅XX魎" , ByteNum = 6 ,RuikeiByteList(4) = 6
+                    'Output = "魑魅X."
+                    Output = Output & AddMoji & AddMoji
+                End If
+                
+                Exit For
+                
+            ElseIf RuikeiByteList(I) > ByteNum Then
+                '例：Mojiretu = "魑魅魍魎" , ByteNum = 7 ,RuikeiByteList(4) = 8
+                'Output = "魑魅魍."
+                Output = Output & AddMoji
+                Exit For
+            End If
+        Next I
+        
+    End If
+        
+    文字列を指定バイト数文字数に省略 = Output
+
+    
+End Function
+
+Private Function 文字列の各文字累計バイト数計算(Mojiretu As String)
+    '20201023追加
+
+    '文字列を1文字ずつに分解して、各文字のバイト文字長を計算し、
+    'その累計値を計算する。
+    '例：Mojiretu="新型EKワゴン"
+    '出力→Output = (2,4,5,6,7,10,12)
+    
+    Dim MojiKosu As Integer
+    Dim I        As Long
+    Dim TmpMoji  As String
+    Dim Output
+    MojiKosu = Len(Mojiretu)
+    ReDim Output(1 To MojiKosu)
+    
+    For I = 1 To MojiKosu
+        TmpMoji = Mid(Mojiretu, I, 1)
+        If I = 1 Then
+            Output(I) = LenB(StrConv(TmpMoji, vbFromUnicode))
+        Else
+            Output(I) = LenB(StrConv(TmpMoji, vbFromUnicode)) + Output(I - 1)
+        End If
+    Next I
+    
+    文字列の各文字累計バイト数計算 = Output
+    
+End Function
+
+Private Function 文字列分解(Mojiretu As String)
+    '20201023追加
+
+    '文字列を1文字ずつ分解して配列に格納
+    Dim I     As Long
+    Dim N     As Long
+    Dim Output
+    
+    N = Len(Mojiretu)
+    ReDim Output(1 To N)
+    For I = 1 To N
+        Output(I) = Mid(Mojiretu, I, 1)
+    Next I
+    
+    文字列分解 = Output
+    
+End Function
+
+Private Sub ClipboardCopy(ByVal InputClipText, Optional MessageIrunaraTrue As Boolean = False)
+'入力テキストをクリップボードに格納
+'配列ならば列方向をTabわけ、行方向を改行する。
+'20210719作成
+    
+    '入力した引数が配列か、配列の場合は1次元配列か、2次元配列か判定
+    Dim HairetuHantei As Integer
+    Dim Jigen1        As Integer
+    Dim Jigen2        As Integer
+    If IsArray(InputClipText) = False Then
+        '入力引数が配列でない
+        HairetuHantei = 0
+    Else
+        On Error Resume Next
+        Jigen2 = UBound(InputClipText, 2)
+        On Error GoTo 0
+        
+        If Jigen2 = 0 Then
+            HairetuHantei = 1
+        Else
+            HairetuHantei = 2
+        End If
+    End If
+    
+    'クリップボードに格納用のテキスト変数を作成
+    Dim Output As String
+    Dim I      As Integer
+    Dim J      As Integer
+    Dim M      As Integer
+    Dim N      As Integer
+    
+    If HairetuHantei = 0 Then '配列でない場合
+        Output = InputClipText
+    ElseIf HairetuHantei = 1 Then '1次元配列の場合
+    
+        If LBound(InputClipText, 1) <> 1 Then '最初の要素番号が1出ない場合は最初の要素番号を1にする
+            InputClipText = Application.Transpose(Application.Transpose(InputClipText))
+        End If
+        
+        N = UBound(InputClipText, 1)
+        
+        Output = ""
+        For I = 1 To N
+            If I = 1 Then
+                Output = InputClipText(I)
+            Else
+                Output = Output & vbLf & InputClipText(I)
+            End If
+            
+        Next I
+    ElseIf HairetuHantei = 2 Then '2次元配列の場合
+        
+        If LBound(InputClipText, 1) <> 1 Or LBound(InputClipText, 2) <> 1 Then
+            InputClipText = Application.Transpose(Application.Transpose(InputClipText))
+        End If
+        
+        N = UBound(InputClipText, 1)
+        M = UBound(InputClipText, 2)
+        
+        Output = ""
+        
+        For I = 1 To N
+            For J = 1 To M
+                If J < M Then
+                    Output = Output & InputClipText(I, J) & Chr(9)
+                Else
+                    Output = Output & InputClipText(I, J)
+                End If
+                
+            Next J
+            
+            If I < N Then
+                Output = Output & Chr(10)
+            End If
+        Next I
+    End If
+    
+    
+    'クリップボードに格納'参考 https://www.ka-net.org/blog/?p=7537
+    With CreateObject("Forms.TextBox.1")
+        .MultiLine = True
+        .Text = Output
+        .SelStart = 0
+        .SelLength = .TextLength
+        .Copy
+    End With
+
+    '格納したテキスト変数をメッセージ表示
+    If MessageIrunaraTrue Then
+        MsgBox ("「" & Output & "」" & vbLf & _
+                "をクリップボードにコピーしました。")
+    End If
+    
+End Sub
 
 
